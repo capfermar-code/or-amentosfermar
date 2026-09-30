@@ -23,6 +23,7 @@
   };
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storage: authStorage },
+    realtime: { params: { eventsPerSecond: 20 }, heartbeatIntervalMs: 15000 },
   });
 </script>
 <script>
@@ -81,6 +82,14 @@
   [data-theme="dark"] .aprov-pct.vazio { color:var(--text-ghost); }
   @media(max-width:768px){ .aprov-chart { min-width:760px; } .aprov-resumo { gap:16px; } .aprov-resumo div { text-align:left; } .aprov-resumo strong { font-size:18px; } }
   [data-theme="dark"] .aprov-resumo strong.verde { color:#4ade80; }
+  .reprov-chart { min-width:480px; gap:6px; }
+  .reprov-chart .aprov-area { height:170px; }
+  .reprov-chart .aprov-barbox { height:145px; }
+  .reprov-chart .aprov-bar { background:linear-gradient(180deg,#ef4444 0%,#C32433 100%); }
+  .reprov-chart .aprov-bar.vazio { background:var(--line-soft); }
+  .reprov-chart .aprov-mes { font-size:11px; }
+  .aprov-resumo strong.vermelho { color:#C32433; }
+  [data-theme="dark"] .aprov-resumo strong.vermelho { color:#f87171; }
   .aprov-legenda { margin-top:12px; font-size:11px; color:var(--text-muted); }
 
   /* ===== PARECER DE CONSULTORIA ===== */
@@ -771,6 +780,13 @@
             <div class="chart-title">❌ Motivos de Perda</div>
             <div class="donut-wrap" id="motivos-wrap"></div>
           </div>
+          <div class="chart-section">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+              <div class="chart-title" id="reprov-chart-title">📉 Reprovados por Mês</div>
+              <div class="aprov-resumo" id="reprov-resumo"></div>
+            </div>
+            <div class="aprov-scroll"><div class="aprov-chart reprov-chart" id="chart-reprovados"></div></div>
+          </div>
         </div>
         <div class="chart-section consult-section">
           <div class="consult-head">
@@ -1168,7 +1184,7 @@
         <div style="overflow-x:auto">
           <table class="table">
             <thead><tr>
-              <th>#</th><th>Data Aprovação</th><th>Cliente</th><th>Valor</th><th>Observações</th><th>Conclusão Instalação</th><th>Tempo Produção</th><th>Tempo Instalação</th><th>Lead Time Total</th>
+              <th>#</th><th>Data Aprovação</th><th>Cliente</th><th>Valor</th><th>Observações</th><th>Conclusão Instalação</th><th>Tempo Produção</th><th>Tempo Instalação</th><th>Lead Time Total</th><th>Ações</th>
             </tr></thead>
             <tbody id="entregues-body"></tbody>
           </table>
@@ -1515,12 +1531,20 @@
       </div>
       <div class="modal-field">
         <label>Situação</label>
-        <select id="m-situacao" onchange="toggleMotivoField()">
+        <select id="m-situacao" onchange="toggleMotivoField();atualizarDicaFluxo()">
           <option>Em Andamento</option>
           <option>Enviado para Cliente</option>
           <option>Aprovado</option>
           <option>Reprovado</option>
         </select>
+      </div>
+      <div class="modal-field full">
+        <label>Fluxo após aprovação</label>
+        <select id="m-fluxo" onchange="atualizarDicaFluxo()">
+          <option value="completo">Completo — Detalhamento → Produção → Instalação</option>
+          <option value="direto">Direto para Produção — sem detalhamento</option>
+        </select>
+        <div id="m-fluxo-dica" style="font-size:11px;color:var(--text-muted);margin-top:5px"></div>
       </div>
       <div class="modal-field full">
         <label>Data Conclusão (opcional)</label>
@@ -2183,6 +2207,7 @@ function renderAll() {
   renderTableFull();
   renderChartMensal();
   renderChartAprovados();
+  renderChartReprovados();
   renderConsultoria();
   renderDonut();
   renderRelatorio();
@@ -2786,6 +2811,53 @@ function renderChartAprovados() {
     <div><small>Taxa de aprovação</small><strong>${fmtPct(totOrc > 0 ? totAprov / totOrc * 100 : 0)}</strong></div>`;
 }
 
+// Quantidade de orçamentos reprovados de janeiro a dezembro (só potenciais)
+function renderChartReprovados() {
+  const el = document.getElementById('chart-reprovados');
+  if (!el) return;
+  const meses = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+  const nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const ano = document.getElementById('dash-ano-filter') ? document.getElementById('dash-ano-filter').value : '';
+  const mesSel = document.getElementById('dash-mes-filter') ? document.getElementById('dash-mes-filter').value : '';
+
+  const qtd = Array(12).fill(0), valor = Array(12).fill(0), total = Array(12).fill(0);
+  potenciais().forEach(o => {
+    if (!o.data) return;
+    const partes = o.data.split('-');
+    if (ano && partes[0] !== ano) return;
+    const m = parseInt(partes[1], 10) - 1;
+    if (isNaN(m) || m < 0 || m > 11) return;
+    total[m]++;
+    if (o.situacao === 'Reprovado') { qtd[m]++; valor[m] += Number(o.valor) || 0; }
+  });
+
+  const max = Math.max(...qtd) || 1;
+  el.innerHTML = meses.map((m, i) => {
+    const tem = qtd[i] > 0;
+    const h = tem ? Math.max(qtd[i] / max * 100, 4) : 0;
+    const dica = `${nomes[i]}${ano ? ' ' + ano : ''}\nReprovados: ${qtd[i]} de ${total[i]} orçamento(s)\nValor perdido: ${fmtBRL(valor[i])}`;
+    const sel = mesSel && parseInt(mesSel, 10) - 1 === i ? ' sel' : '';
+    return `<div class="aprov-col${sel}">
+      <div class="aprov-area">
+        <div class="aprov-barbox" style="flex-direction:column;justify-content:flex-end;align-items:center">
+          <div class="aprov-valor">${tem ? qtd[i] : ''}</div>
+          <div class="aprov-bar${tem ? '' : ' vazio'}" style="height:${h * 0.82}%" title="${dica}"></div>
+        </div>
+      </div>
+      <div class="aprov-mes">${m}</div>
+    </div>`;
+  }).join('');
+
+  const totQtd = qtd.reduce((a, b) => a + b, 0);
+  const totVal = valor.reduce((a, b) => a + b, 0);
+  const titulo = document.getElementById('reprov-chart-title');
+  if (titulo) titulo.textContent = '📉 Reprovados por Mês' + (ano ? ' — ' + ano : ' — todos os anos');
+  const resumo = document.getElementById('reprov-resumo');
+  if (resumo) resumo.innerHTML = `
+    <div><small>Reprovados</small><strong class="vermelho">${totQtd}</strong></div>
+    <div><small>Valor perdido</small><strong>${fmtBRLCurto(totVal)}</strong></div>`;
+}
+
 function renderChartMensal() {
   const months = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
   const byMonth      = Array(12).fill(0);
@@ -2828,13 +2900,17 @@ function renderDonut() {
     return true;
   });
 
-  const detTotal = filtered.filter(o => o.situacao === 'Aprovado' && o.statusProducao !== 'Em Produção' && o.statusProducao !== 'Concluído').length;
-  const prodTotal = filtered.filter(o => o.statusProducao === 'Em Produção' || o.statusProducao === 'Concluído').length;
-  const instTotal = filtered.filter(o => o.statusInstalacao === 'Em Instalação' || o.statusInstalacao === 'Concluído').length;
+  // Cada projeto conta em UMA fase só (mesmas regras das telas), sem somar duas vezes
+  const emProd  = o => o.statusProducao === 'Em Produção' || o.statusProducao === 'Concluído' || o.statusDetalhamento === 'Concluído';
+  const aguTotal  = filtered.filter(o => o.situacao === 'Enviado para Cliente' || o.situacao === 'Aguardando Cliente').length;
+  const detTotal  = filtered.filter(o => o.situacao === 'Aprovado' && !emProd(o)).length;
+  const prodTotal = filtered.filter(o => o.situacao === 'Aprovado' && emProd(o) && o.statusProducao !== 'Concluído').length;
+  const instTotal = filtered.filter(o => o.situacao === 'Aprovado' && o.statusProducao === 'Concluído' && o.statusInstalacao !== 'Concluído').length;
   const entTotal  = filtered.filter(o => o.statusInstalacao === 'Concluído').length;
-  const total = detTotal + prodTotal + instTotal + entTotal || 1;
+  const total = aguTotal + detTotal + prodTotal + instTotal + entTotal || 1;
 
   const slices = [
+    {val:aguTotal,  color:'#a78bfa', label:'Aguardando Cliente'},
     {val:detTotal,  color:'#60a5fa', label:'Detalhamento'},
     {val:prodTotal, color:'#3b82f6', label:'Produção'},
     {val:instTotal, color:'#f59e0b', label:'Instalação'},
@@ -2849,7 +2925,7 @@ function renderDonut() {
     const x2=cx+R*Math.sin(start), y2=cy-R*Math.cos(start);
     if(pct>0) paths+=`<path d="M${cx},${cy} L${x1},${y1} A${R},${R} 0 ${angle>Math.PI?1:0},1 ${x2},${y2} Z" fill="${s.color}" opacity=".9"/>`;
   });
-  const grandTotal = detTotal+prodTotal+instTotal+entTotal;
+  const grandTotal = aguTotal+detTotal+prodTotal+instTotal+entTotal;
   paths+=`<circle cx="${cx}" cy="${cy}" r="42" style="fill:var(--card)"/>`;
   paths+=`<text x="${cx}" y="${cy-4}" text-anchor="middle" style="fill:var(--text)" font-family="Barlow Condensed,sans-serif" font-weight="800" font-size="22">${grandTotal}</text>`;
   paths+=`<text x="${cx}" y="${cy+14}" text-anchor="middle" style="fill:var(--text-muted)" font-family="Barlow,sans-serif" font-size="11">projetos</text>`;
@@ -3192,7 +3268,9 @@ function openModal() {
   document.getElementById('m-conclusao').value = '';
   document.getElementById('m-motivo').value = '';
   document.getElementById('m-obs-geral').value = '';
+  document.getElementById('m-fluxo').value = 'completo';
   toggleMotivoField();
+  atualizarDicaFluxo();
   setNaoPot(false);
   document.getElementById('modal').classList.add('open');
   setTimeout(() => {
@@ -3213,7 +3291,9 @@ function editOrcamento(i) {
   document.getElementById('m-conclusao').value = o.conclusao||'';
   document.getElementById('m-motivo').value = o.motivoPerda||'';
   document.getElementById('m-obs-geral').value = o.obsGeral||'';
+  document.getElementById('m-fluxo').value = o.fluxo === 'direto' ? 'direto' : 'completo';
   toggleMotivoField();
+  atualizarDicaFluxo();
   setNaoPot(o.naoPotencial);
   document.getElementById('modal').classList.add('open');
   // Payment panel
@@ -3227,6 +3307,34 @@ function closeModal() {
   if (customBody) { customBody.style.display = 'none'; customBody.innerHTML = ''; }
   const grid = document.querySelector('#modal .modal-grid');
   if (grid) grid.style.display = '';
+}
+
+// Mostra onde o orçamento vai parar ao salvar/aprovar
+function atualizarDicaFluxo() {
+  const el = document.getElementById('m-fluxo-dica');
+  if (!el) return;
+  const fluxo = document.getElementById('m-fluxo').value;
+  const sit = document.getElementById('m-situacao').value;
+  if (sit === 'Aprovado') {
+    el.innerHTML = fluxo === 'direto'
+      ? '⚡ Ao salvar, vai <b>direto para a Produção</b>.'
+      : 'Ao salvar, vai para o <b>Detalhamento</b>.';
+  } else {
+    el.innerHTML = fluxo === 'direto'
+      ? '⚡ Quando for aprovado, vai direto para a Produção.'
+      : 'Quando for aprovado, passa pelo Detalhamento antes da Produção.';
+  }
+}
+
+// Aplica o fluxo no momento em que o orçamento vira "Aprovado"
+function aplicarFluxoAprovacao(o) {
+  if (o.situacao !== 'Aprovado') return;
+  if (o.fluxo === 'direto') {
+    if (o.statusProducao === 'Em Produção' || o.statusProducao === 'Concluído') return;
+    o.statusDetalhamento = 'Concluído';
+    o.detalhamentoPulado = true;
+    o.statusProducao = o.statusProducao || 'Não Iniciado';
+  }
 }
 
 function toggleMotivoField() {
@@ -3247,18 +3355,26 @@ function saveOrcamento() {
     motivoPerda: document.getElementById('m-situacao').value === 'Reprovado' ? document.getElementById('m-motivo').value : '',
     obsGeral: document.getElementById('m-obs-geral').value,
     naoPotencial: naoPotCheck,
+    fluxo: document.getElementById('m-fluxo').value,
   };
   if (!obj.cliente) { showToast('Digite o nome do cliente','error'); return; }
+  let destino = '';
   if (editingIdx !== null) {
     // Preserva campos que não aparecem no modal (pagamentos, status fases, etc)
     const existing = orcamentos[editingIdx];
+    const virouAprovado = existing.situacao !== 'Aprovado' && obj.situacao === 'Aprovado';
     orcamentos[editingIdx] = Object.assign({}, existing, obj);
+    if (virouAprovado) { aplicarFluxoAprovacao(orcamentos[editingIdx]); destino = obj.fluxo; }
   }
-  else { orcamentos.push(obj); orcamentos.sort((a,b)=>a.num-b.num); }
+  else {
+    aplicarFluxoAprovacao(obj);
+    if (obj.situacao === 'Aprovado') destino = obj.fluxo;
+    orcamentos.push(obj); orcamentos.sort((a,b)=>a.num-b.num);
+  }
   saveData();
   closeModal();
   renderAll();
-  showToast('✓ Orçamento salvo!','success');
+  showToast(destino === 'direto' ? '⚡ Orçamento salvo e enviado para a Produção!' : destino === 'completo' ? '✓ Orçamento salvo e enviado para o Detalhamento!' : '✓ Orçamento salvo!','success');
 }
 
 function deleteOrcamento(i) {
@@ -3544,7 +3660,7 @@ function renderProducao() {
       <td>${fmtDate(o.previsaoConclusaoProducao)||'—'}</td>
       <td style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--text-muted)">${lt}</td>
       <td>${timerBtn(idx,'producao',o.producaoRunning,canEdit)}</td>
-      <td style="display:flex;gap:4px">${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editProducao(${idx})">Editar</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" onclick="reverterProducao(${o.num})">↩</button>` : '—'}</td>
+      <td style="display:flex;gap:4px">${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editProducao(${idx})">Editar</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Detalhamento" onclick="reverterProducao(${idx})">↩</button>` : '—'}</td>
     </tr>`;
   }).join('');
   startLiveTimers();
@@ -3645,7 +3761,7 @@ function renderInstalacao() {
       <td>${fmtDate(o.previsaoConclusaoInstalacao)||'—'}</td>
       <td style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--text-muted)">${lt}</td>
       <td>${timerBtn(idx,'instalacao',o.instalacaoRunning,canEdit)}</td>
-      <td style="display:flex;gap:4px">${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editInstalacao(${idx})">Editar</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" onclick="reverterInstalacao(${o.num})">↩</button>` : '—'}</td>
+      <td style="display:flex;gap:4px">${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editInstalacao(${idx})">Editar</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Produção" onclick="reverterInstalacao(${idx})">↩</button>` : '—'}</td>
     </tr>`;
   }).join('');
   startLiveTimers();
@@ -4053,11 +4169,13 @@ function renderEntregues() {
   });
 
   if (items.length === 0) {
-    el.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:32px">Nenhum pedido entregue ainda.</td></tr>';
+    el.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-faint);padding:32px">Nenhum pedido entregue ainda.</td></tr>';
     return;
   }
   items.sort((a,b) => (a.cliente||'').localeCompare(b.cliente||'', 'pt-BR'));
+  const canEditEnt = hasEditPerm('entregues');
   el.innerHTML = items.map(o => {
+    const idx = orcamentos.indexOf(o);
     const tProd = fmtTimer(o.producaoTotalSeconds || 0);
     const tInst = fmtTimer(o.instalacaoTotalSeconds || 0);
     // Lead time total: data aprovação até conclusão instalação
@@ -4083,6 +4201,7 @@ function renderEntregues() {
       <td style="font-family:monospace;color:#f59e0b">${tProd}</td>
       <td style="font-family:monospace;color:#22c55e">${tInst}</td>
       <td style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:#a78bfa">${leadTotal}</td>
+      <td>${canEditEnt ? `<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Instalação" onclick="reverterEntregue(${idx})">↩</button>` : '—'}</td>
     </tr>`;
   }).join('');
 }
@@ -4246,62 +4365,110 @@ function renderReprovados() {
       <td style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:#ef4444">${fmtBRL(o.valor)}</td>
       <td><span class="badge badge-red">${o.motivoPerda||'Não informado'}</span></td>
       <td style="font-size:12px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.obsGeral||'—'}</td>
-      <td>${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:#f59e0b;border-color:#f59e0b" onclick="reverterSituacao(${o.num},'Em Andamento')">↩ Reverter</button>` : '—'}</td>
+      <td>${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Aguardando Cliente" onclick="reverterReprovado(${idx})">↩ Reverter</button>` : '—'}</td>
     </tr>`;
   }).join('');
 }
 
 // ===== REVERTER =====
-function reverterSituacao(num, novaSituacao) {
-  const o = orcamentos.find(x => x.num == num);
-  if (!o) { showToast('Ordem não encontrada!', 'error'); return; }
-  o.situacao = novaSituacao;
-  if (novaSituacao === 'Em Andamento') o.motivoPerda = '';
-  saveData();
-  showToast('✅ Revertido!', 'success');
-  renderAll();
+// Todas as funções recebem o ÍNDICE da linha (nunca o número): orçamentos com nº 0 ou vazio
+// eram confundidos entre si (0 == '' em JavaScript) e o sistema alterava o registro errado.
+// Cada reversão devolve o item para a TELA ANTERIOR do fluxo:
+// Orçamentos ← Aguardando Cliente ← Detalhamento ← Produção ← Instalação ← Entregues/Cobrança
+//                  ↑ Reprovados
+function _pararTimer(o, tipo) {
+  if (!o[tipo + 'Running']) return;
+  const elapsed = calcWorkSeconds(o[tipo + 'StartedAt'], Date.now());
+  o[tipo + 'TotalSeconds'] = (o[tipo + 'TotalSeconds'] || 0) + elapsed;
+  o[tipo + 'Running'] = false;
+  o[tipo + 'StartedAt'] = null;
 }
-
-function reverterProducao(num) {
-  const o = orcamentos.find(x => x.num == num);
-  if (!o) return;
-  o.statusProducao = 'Não Iniciado';
-  o.inicioProducao = '';
-  o.previsaoConclusaoProducao = '';
-  document.querySelectorAll('.prod-status-filter').forEach(cb => cb.checked = false);
-  saveData();
-  showToast('✅ Produção revertida!', 'success');
-  renderAll();
+function _limparFiltrosStatus() {
+  document.querySelectorAll('.prod-status-filter,.inst-status-filter,.det-status-filter,.cob-status-filter').forEach(cb => cb.checked = false);
 }
-
-function reverterInstalacao(num) {
-  const o = orcamentos.find(x => x.num == num);
-  if (!o) return;
-  o.statusInstalacao = 'Não Iniciado';
-  o.inicioInstalacao = '';
-  o.previsaoConclusaoInstalacao = '';
-  document.querySelectorAll('.inst-status-filter').forEach(cb => cb.checked = false);
+function _concluirReversao(msg) {
+  _limparFiltrosStatus();
   saveData();
-  showToast('✅ Instalação revertida!', 'success');
   renderAll();
+  showToast(msg, 'success');
 }
-
-function reverterDetalhamento(idx) {
-  // Usa o índice exato da linha (e não o número), pois pode haver orçamentos com número repetido/vazio
+function _getOrc(idx) {
   const o = orcamentos[idx];
-  if (!o) { showToast('Ordem não encontrada!', 'error'); return; }
+  if (!o) showToast('Ordem não encontrada! Atualize a página.', 'error');
+  return o;
+}
+
+// Aguardando Cliente → Orçamentos (Em Andamento)
+function reverterAguardando(idx) {
+  const o = _getOrc(idx); if (!o) return;
+  if (!confirm('Voltar "' + o.cliente + '" para Orçamentos (Em Andamento)?')) return;
+  o.situacao = 'Em Andamento';
+  _concluirReversao('↩ "' + o.cliente + '" voltou para Orçamentos');
+}
+
+// Reprovados → Aguardando Cliente
+function reverterReprovado(idx) {
+  const o = _getOrc(idx); if (!o) return;
+  if (!confirm('Voltar "' + o.cliente + '" para Aguardando Cliente?')) return;
+  o.situacao = 'Enviado para Cliente';
+  o.motivoPerda = '';
+  _concluirReversao('↩ "' + o.cliente + '" voltou para Aguardando Cliente');
+}
+
+// Detalhamento → Aguardando Cliente
+function reverterDetalhamento(idx) {
+  const o = _getOrc(idx); if (!o) return;
   if (!confirm('Retornar "' + o.cliente + '" para Aguardando Cliente?')) return;
   o.situacao = 'Enviado para Cliente';
   o.statusDetalhamento = 'Aguardando';
   o.inicioDetalhamento = '';
   o.fimDetalhamento = '';
-  saveData();
-  showToast('✅ Detalhamento revertido!', 'success');
-  renderAll();
+  o.detalhamentoPulado = false;
+  _concluirReversao('↩ "' + o.cliente + '" voltou para Aguardando Cliente');
 }
 
+// Produção → Detalhamento (ou Aguardando Cliente, se o fluxo pulou o detalhamento)
+function reverterProducao(idx) {
+  const o = _getOrc(idx); if (!o) return;
+  const pulou = o.detalhamentoPulado || o.fluxo === 'direto';
+  const destino = pulou ? 'Aguardando Cliente' : 'Detalhamento';
+  if (!confirm('Voltar "' + o.cliente + '" para ' + destino + '?')) return;
+  _pararTimer(o, 'producao');
+  o.statusProducao = 'Não Iniciado';
+  o.inicioProducao = '';
+  o.previsaoConclusaoProducao = '';
+  if (pulou) {
+    o.situacao = 'Enviado para Cliente';
+    o.statusDetalhamento = 'Aguardando';
+    o.detalhamentoPulado = false;
+  } else {
+    // Sem isso o item continuava na Produção, porque ela exibe tudo com detalhamento concluído
+    o.statusDetalhamento = 'Em Andamento';
+    o.fimDetalhamento = '';
+  }
+  _concluirReversao('↩ "' + o.cliente + '" voltou para ' + destino);
+}
 
+// Instalação → Produção
+function reverterInstalacao(idx) {
+  const o = _getOrc(idx); if (!o) return;
+  if (!confirm('Voltar "' + o.cliente + '" para Produção?')) return;
+  _pararTimer(o, 'instalacao');
+  o.statusInstalacao = 'Não Iniciado';
+  o.inicioInstalacao = '';
+  o.previsaoConclusaoInstalacao = '';
+  // Sem isso o item continuava na Instalação, que exibe tudo com produção concluída
+  o.statusProducao = 'Em Produção';
+  _concluirReversao('↩ "' + o.cliente + '" voltou para Produção');
+}
 
+// Entregues / Cobrança → Instalação
+function reverterEntregue(idx) {
+  const o = _getOrc(idx); if (!o) return;
+  if (!confirm('Voltar "' + o.cliente + '" para Instalação?')) return;
+  o.statusInstalacao = 'Em Instalação';
+  _concluirReversao('↩ "' + o.cliente + '" voltou para Instalação');
+}
 
 // ===== AGUARDANDO CLIENTE =====
 function renderAguardando() {
@@ -4343,7 +4510,7 @@ function renderAguardando() {
     return `<tr>
       <td style="color:var(--text-faint);font-weight:700">${o.num}</td>
       <td>${fmtDate(o.data)}</td>
-      <td style="font-weight:600">${o.cliente}</td>
+      <td style="font-weight:600">${o.cliente}${o.fluxo === 'direto' ? '<div style="font-size:10px;font-weight:700;color:#f59e0b;margin-top:2px">⚡ Direto p/ produção</div>' : ''}</td>
       <td style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700">
         ${fmtBRL(o.valor)}
         ${canEdit ? `<button onclick="abrirEditarValor(${idx})" title="Editar valor" style="background:none;border:none;color:#f59e0b;cursor:pointer;font-size:13px;padding:0 4px;vertical-align:middle">✏️</button>` : ''}
@@ -4357,7 +4524,7 @@ function renderAguardando() {
         ${canEdit ? `
           <button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:#22c55e;border-color:#22c55e" onclick="aprovarOrcamento(${idx})">✅ Aprovar</button>
           <button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:#ef4444;border-color:#ef4444" onclick="reprovarOrcamento(${idx})">❌ Reprovar</button>
-          <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" onclick="reverterSituacao(${o.num},'Em Andamento')">↩</button>
+          <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Orçamentos (Em Andamento)" onclick="reverterAguardando(${idx})">↩</button>
         ` : '—'}
       </td>
     </tr>`;
@@ -4414,10 +4581,13 @@ function abrirEditarValor(idx) {
 }
 
 function aprovarOrcamento(idx) {
-  if (!confirm('Aprovar este orçamento?')) return;
-  orcamentos[idx].situacao = 'Aprovado';
+  const o = orcamentos[idx];
+  const direto = o.fluxo === 'direto';
+  if (!confirm('Aprovar este orçamento?\n\nDestino: ' + (direto ? 'Produção (direto)' : 'Detalhamento'))) return;
+  o.situacao = 'Aprovado';
+  aplicarFluxoAprovacao(o);
   saveData(); renderAll();
-  showToast('✅ Orçamento aprovado!', 'success');
+  showToast(direto ? '⚡ Aprovado e enviado para a Produção!' : '✅ Aprovado e enviado para o Detalhamento!', 'success');
 }
 
 function reprovarOrcamento(idx) {
@@ -4742,14 +4912,12 @@ function confirmarExcluirOrc(idx) {
   document.getElementById('modal-excluir').classList.add('open');
 }
 
-function reverterCobranca(num) {
-  const o = orcamentos.find(x => x.num == num);
-  if (!o) return;
+function reverterCobranca(idx) {
+  const o = _getOrc(idx); if (!o) return;
+  if (!confirm('Voltar "' + o.cliente + '" para Instalação?')) return;
   o.statusInstalacao = 'Em Instalação';
-  o.statusCobranca = 'Pendente';
-  saveData();
-  showToast('✅ Revertido para Instalação!', 'success');
-  renderAll();
+  o.statusCobranca = o.statusCobranca === 'Pago' ? 'Pago' : 'Pendente';
+  _concluirReversao('↩ "' + o.cliente + '" voltou para Instalação');
 }
 
 function renderCobranca() {
@@ -4795,7 +4963,7 @@ function renderCobranca() {
       <td style="font-family:'Barlow Condensed',sans-serif">${o.adiantamento ? fmtBRL(o.adiantamento) : '—'}</td>
       <td><span class="badge ${stColor}">${st}</span></td>
       <td style="font-size:11px;color:var(--text-muted);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.obsCobranca||'—'}</td>
-      <td style="display:flex;gap:4px">${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editCobranca(${idx})">Editar</button>${st !== 'Pago' ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:#22c55e;border-color:#22c55e" onclick="confirmarPagamento(${idx})">✅ Pago</button>` : ''}` : '—'}</td>
+      <td style="display:flex;gap:4px">${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editCobranca(${idx})">Editar</button>${st !== 'Pago' ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:#22c55e;border-color:#22c55e" onclick="confirmarPagamento(${idx})">✅ Pago</button>` : ''}<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Instalação" onclick="reverterCobranca(${idx})">↩</button>` : '—'}</td>
     </tr>`;
   }).join('');
 }
@@ -5510,10 +5678,173 @@ function saveTarefas() {
 
 let _canalOrc = null;
 let _canalTar = null;
+let _rtStatus = { orc: '', tar: '' };
+let _rtRetry = { orc: 0, tar: 0 };
+let _rtPollTimer = null;
+let _rtAtivo = false;
+
+// ---- Renderização agrupada: várias mudanças seguidas = um único redesenho ----
+let _renderPend = false, _renderAgendaPend = false;
+function agendarRender() {
+  if (_renderPend) return;
+  _renderPend = true;
+  requestAnimationFrame(() => { _renderPend = false; renderAll(); });
+}
+function agendarRenderAgenda() {
+  if (_renderAgendaPend) return;
+  _renderAgendaPend = true;
+  requestAnimationFrame(() => { _renderAgendaPend = false; renderAgenda(); renderCalendario(); });
+}
+
+// Aviso de mudança feita por outro usuário (agrupa vários eventos em um toast só)
+let _avisoTimer = null, _avisoNovos = 0, _avisoAlterados = 0;
+function avisarMudancaRemota(novo) {
+  if (novo) _avisoNovos++; else _avisoAlterados++;
+  clearTimeout(_avisoTimer);
+  _avisoTimer = setTimeout(() => {
+    const partes = [];
+    if (_avisoNovos) partes.push(_avisoNovos === 1 ? '1 novo orçamento' : _avisoNovos + ' novos orçamentos');
+    if (_avisoAlterados) partes.push(_avisoAlterados === 1 ? '1 atualização' : _avisoAlterados + ' atualizações');
+    showToast('🔄 ' + partes.join(' e ') + ' de outro usuário', 'success');
+    _avisoNovos = 0; _avisoAlterados = 0;
+  }, 400);
+}
+
+// Indicador "Ao vivo" no canto da tela
+function atualizarIndicadorRT() {
+  let el = document.getElementById('rt-indicador');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'rt-indicador';
+    el.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:900;display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:12px;font:600 11px Barlow,sans-serif;background:var(--card);border:1px solid var(--line);color:var(--text-muted);pointer-events:none';
+    document.body.appendChild(el);
+  }
+  if (!_rtAtivo) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  const ok = _rtStatus.orc === 'SUBSCRIBED';
+  const cor = ok ? '#22c55e' : '#f59e0b';
+  el.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${cor};display:inline-block"></span>${ok ? 'Ao vivo' : 'Reconectando…'}`;
+  el.title = ok ? 'Alterações de outros usuários aparecem automaticamente' : 'Sem conexão em tempo real — buscando atualizações a cada 10 s';
+}
 
 function pararSincronizacao() {
+  _rtAtivo = false;
   [_canalOrc, _canalTar].forEach(c => { if (c) sb.removeChannel(c); });
   _canalOrc = null; _canalTar = null;
+  clearInterval(_rtPollTimer); _rtPollTimer = null;
+  atualizarIndicadorRT();
+}
+
+// Aplica uma linha vinda do servidor (tempo real ou ressincronização)
+function _aplicarLinhaOrc(row, avisar) {
+  const serial = stableStringify(row.dados);
+  if (_syncSnapshotOrc[row.id] === serial) return false; // já temos essa versão (inclusive nosso próprio salvamento)
+  _syncSnapshotOrc[row.id] = serial;
+  const idx = orcamentos.findIndex(o => o._fbKey === row.id);
+  if (idx === -1) {
+    orcamentos.push({ _fbKey: row.id, ...row.dados });
+    orcamentos.sort((a,b) => (a.num||0) - (b.num||0));
+  } else {
+    orcamentos[idx] = { _fbKey: row.id, ...row.dados };
+  }
+  if (avisar) avisarMudancaRemota(idx === -1);
+  return true;
+}
+
+// Busca tudo de novo e aplica só o que mudou (usado ao reconectar, ao voltar para a aba e como reserva)
+let _ressincronizando = false;
+async function ressincronizarOrcamentos() {
+  if (_ressincronizando || !_rtAtivo) return;
+  if (Date.now() - _lastLocalSave < 2500) return; // evita sobrescrever um salvamento nosso ainda em andamento
+  _ressincronizando = true;
+  try {
+    const rows = await sbSelectAll('orcamentos', 'id,dados');
+    let mudou = false;
+    const ids = new Set();
+    rows.forEach(r => { ids.add(r.id); if (_aplicarLinhaOrc(r, true)) mudou = true; });
+    // Excluídos por outro usuário
+    const antes = orcamentos.length;
+    orcamentos = orcamentos.filter(o => !o._fbKey || ids.has(o._fbKey) || !_syncSnapshotOrc.hasOwnProperty(o._fbKey));
+    Object.keys(_syncSnapshotOrc).forEach(k => { if (!ids.has(k)) delete _syncSnapshotOrc[k]; });
+    if (orcamentos.length !== antes) mudou = true;
+    if (mudou) agendarRender();
+  } catch (e) {
+    console.warn('Ressincronização falhou:', e);
+  } finally {
+    _ressincronizando = false;
+  }
+}
+
+// Reconecta um canal com espera crescente (1s, 2s, 4s… até 30s)
+function _reconectar(tipo) {
+  if (!_rtAtivo) return;
+  const espera = Math.min(30000, 1000 * Math.pow(2, _rtRetry[tipo]++));
+  setTimeout(() => {
+    if (!_rtAtivo) return;
+    if (tipo === 'orc') _assinarOrcamentos(); else _assinarTarefas();
+  }, espera);
+}
+
+function _assinarOrcamentos() {
+  if (_canalOrc) sb.removeChannel(_canalOrc);
+  _canalOrc = sb.channel('orcamentos-sync-' + Date.now())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'orcamentos' }, payload => {
+      if (payload.eventType === 'DELETE') {
+        const key = payload.old && payload.old.id;
+        if (!key || !_syncSnapshotOrc.hasOwnProperty(key)) return;
+        delete _syncSnapshotOrc[key];
+        const idx = orcamentos.findIndex(o => o._fbKey === key);
+        if (idx === -1) return;
+        orcamentos.splice(idx, 1);
+        agendarRender();
+        return;
+      }
+      const row = payload.new;
+      if (!row || !row.id) return;
+      if (_aplicarLinhaOrc(row, true)) agendarRender();
+    })
+    .subscribe(status => {
+      const anterior = _rtStatus.orc;
+      _rtStatus.orc = status;
+      atualizarIndicadorRT();
+      if (status === 'SUBSCRIBED') {
+        // Ao (re)conectar, busca o que pode ter mudado enquanto estava desconectado
+        if (anterior && anterior !== 'SUBSCRIBED') ressincronizarOrcamentos();
+        _rtRetry.orc = 0;
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        if (_rtAtivo) _reconectar('orc');
+      }
+    });
+}
+
+function _assinarTarefas() {
+  if (_canalTar) sb.removeChannel(_canalTar);
+  _canalTar = sb.channel('tarefas-sync-' + Date.now())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tarefas' }, payload => {
+      if (payload.eventType === 'DELETE') {
+        const id = payload.old && payload.old.id;
+        if (!id || !_syncSnapshotTar.hasOwnProperty(id)) return;
+        delete _syncSnapshotTar[id];
+        tarefas = tarefas.filter(t => String(t.id) !== id);
+        agendarRenderAgenda();
+        return;
+      }
+      const row = payload.new;
+      if (!row || !row.id) return;
+      const serial = stableStringify(row.dados);
+      if (_syncSnapshotTar[row.id] === serial) return; // eco do nosso próprio salvamento
+      _syncSnapshotTar[row.id] = serial;
+      const idx = tarefas.findIndex(t => String(t.id) === row.id);
+      if (idx === -1) tarefas.push(row.dados); else tarefas[idx] = row.dados;
+      agendarRenderAgenda();
+    })
+    .subscribe(status => {
+      _rtStatus.tar = status;
+      if (status === 'SUBSCRIBED') _rtRetry.tar = 0;
+      else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        if (_rtAtivo) _reconectar('tar');
+      }
+    });
 }
 
 function loadTarefas() {
@@ -5523,34 +5854,13 @@ function loadTarefas() {
     renderAgenda();
     renderMemberFilters();
     renderCalendario();
-
-    // Tempo real: cada evento traz só a tarefa que mudou
-    if (_canalTar) sb.removeChannel(_canalTar);
-    _canalTar = sb.channel('tarefas-sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tarefas' }, payload => {
-        if (payload.eventType === 'DELETE') {
-          const id = payload.old && payload.old.id;
-          if (!id || !_syncSnapshotTar.hasOwnProperty(id)) return;
-          delete _syncSnapshotTar[id];
-          tarefas = tarefas.filter(t => String(t.id) !== id);
-          renderAgenda(); renderCalendario();
-          return;
-        }
-        const row = payload.new;
-        if (!row || !row.id) return;
-        const serial = stableStringify(row.dados);
-        if (_syncSnapshotTar[row.id] === serial) return; // eco do nosso próprio salvamento
-        _syncSnapshotTar[row.id] = serial;
-        const idx = tarefas.findIndex(t => String(t.id) === row.id);
-        if (idx === -1) tarefas.push(row.dados); else tarefas[idx] = row.dados;
-        renderAgenda(); renderCalendario();
-      })
-      .subscribe();
+    _assinarTarefas();
   }).catch(e => { tarefas = []; console.error('Erro ao carregar tarefas:', e); });
 }
 
 // ===================================================================
 function iniciarSincronizacao() {
+  _rtAtivo = true;
   // Carrega os dados uma vez ao fazer login
   sbSelectAll('orcamentos', 'id,dados').then(rows => {
     _syncSnapshotOrc = {};
@@ -5562,40 +5872,20 @@ function iniciarSincronizacao() {
     renderAll();
     if (currentUser && currentUser.role === 'Administrador') migrarSituacoes();
 
-    // Tempo real: cada evento traz só o orçamento que mudou, não a lista inteira
-    if (_canalOrc) sb.removeChannel(_canalOrc);
-    _canalOrc = sb.channel('orcamentos-sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orcamentos' }, payload => {
-        if (payload.eventType === 'DELETE') {
-          const key = payload.old && payload.old.id;
-          if (!key || !_syncSnapshotOrc.hasOwnProperty(key)) return;
-          delete _syncSnapshotOrc[key];
-          const idx = orcamentos.findIndex(o => o._fbKey === key);
-          if (idx === -1) return;
-          orcamentos.splice(idx, 1);
-          renderAll();
-          return;
-        }
-        const row = payload.new;
-        if (!row || !row.id) return;
-        const serial = stableStringify(row.dados);
-        if (_syncSnapshotOrc[row.id] === serial) return; // eco do nosso próprio salvamento
-        _syncSnapshotOrc[row.id] = serial;
-        const idx = orcamentos.findIndex(o => o._fbKey === row.id);
-        if (idx === -1) {
-          orcamentos.push({ _fbKey: row.id, ...row.dados });
-          orcamentos.sort((a,b) => (a.num||0) - (b.num||0));
-          renderAll();
-          showToast('🔄 Novo orçamento sincronizado!', 'success');
-        } else {
-          orcamentos[idx] = { _fbKey: row.id, ...row.dados };
-          renderAll();
-          showToast('🔄 Dados atualizados!', 'success');
-        }
-      })
-      .subscribe();
+    // Tempo real: cada evento traz só o orçamento que mudou
+    _assinarOrcamentos();
+
+    // Reserva: se o tempo real cair, busca atualizações a cada 10 s até voltar
+    clearInterval(_rtPollTimer);
+    _rtPollTimer = setInterval(() => {
+      if (_rtStatus.orc !== 'SUBSCRIBED' && !document.hidden) ressincronizarOrcamentos();
+    }, 10000);
   }).catch(e => tratarErroSupabase(e, 'Erro ao carregar orçamentos'));
 }
+
+// Voltou para a aba ou a internet voltou: atualiza na hora
+document.addEventListener('visibilitychange', () => { if (!document.hidden) ressincronizarOrcamentos(); });
+window.addEventListener('online', () => { ressincronizarOrcamentos(); });
 
 
 </script>
