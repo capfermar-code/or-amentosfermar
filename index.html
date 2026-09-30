@@ -49,6 +49,69 @@
   }
 
 
+  /* ===== GRÁFICO APROVADOS POR MÊS (barras verticais) ===== */
+  .aprov-chart-section { margin-bottom:18px; }
+  .aprov-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:6px; }
+  .aprov-resumo { display:flex; gap:22px; flex-wrap:wrap; }
+  .aprov-resumo div { text-align:right; }
+  .aprov-resumo small { display:block; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .aprov-resumo strong { font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:800; color:var(--text); }
+  .aprov-resumo strong.verde { color:#16a34a; }
+  .aprov-scroll { overflow-x:auto; }
+  .aprov-chart { display:flex; align-items:flex-end; gap:10px; min-width:620px; padding-top:8px; }
+  .aprov-col { flex:1; display:flex; flex-direction:column; align-items:center; min-width:0; border-radius:4px; padding:4px 0; }
+  .aprov-col.sel { background:var(--red-tint-1); }
+  .aprov-valor { font-size:11px; font-weight:700; color:var(--text); white-space:nowrap; margin-bottom:5px; }
+  .aprov-area { width:100%; height:220px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; border-bottom:1px solid var(--line); }
+  .aprov-barbox { width:100%; height:190px; display:flex; align-items:flex-end; justify-content:center; }
+  .aprov-bar {
+    width:62%; max-width:46px; min-height:0; border-radius:4px 4px 0 0;
+    background:linear-gradient(180deg,#22c55e 0%,#16a34a 100%);
+    transition:height .7s ease; cursor:default;
+  }
+  .aprov-bar:hover { filter:brightness(1.1); }
+  .aprov-bar.vazio { background:var(--line-soft); height:3px !important; }
+  .aprov-mes { font-size:12px; font-weight:700; color:var(--text-muted); margin-top:8px; }
+  .aprov-pct {
+    margin-top:5px; font-size:11px; font-weight:700; padding:2px 7px; border-radius:10px;
+    background:rgba(34,197,94,.14); color:#16a34a; white-space:nowrap;
+  }
+  .aprov-pct.vazio { background:transparent; color:var(--text-ghost); }
+  [data-theme="dark"] .aprov-pct { color:#4ade80; }
+  [data-theme="dark"] .aprov-pct.vazio { color:var(--text-ghost); }
+  @media(max-width:768px){ .aprov-chart { min-width:760px; } .aprov-resumo { gap:16px; } .aprov-resumo div { text-align:left; } .aprov-resumo strong { font-size:18px; } }
+  [data-theme="dark"] .aprov-resumo strong.verde { color:#4ade80; }
+  .aprov-legenda { margin-top:12px; font-size:11px; color:var(--text-muted); }
+
+  /* ===== PARECER DE CONSULTORIA ===== */
+  .consult-section { margin-bottom:18px; }
+  .consult-head { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-bottom:14px; }
+  .consult-sub { font-size:12px; color:var(--text-muted); margin-top:-8px; }
+  .consult-resumo { display:flex; gap:8px; flex-wrap:wrap; }
+  .consult-chip { font-size:11px; font-weight:700; padding:4px 10px; border-radius:12px; white-space:nowrap; }
+  .nivel-critico { --nv:#dc2626; --nv-bg:rgba(220,38,38,.10); }
+  .nivel-atencao { --nv:#d97706; --nv-bg:rgba(217,119,6,.11); }
+  .nivel-oportunidade { --nv:#2563eb; --nv-bg:rgba(37,99,235,.10); }
+  .nivel-positivo { --nv:#16a34a; --nv-bg:rgba(22,163,74,.10); }
+  [data-theme="dark"] .nivel-critico { --nv:#f87171; }
+  [data-theme="dark"] .nivel-atencao { --nv:#fbbf24; }
+  [data-theme="dark"] .nivel-oportunidade { --nv:#60a5fa; }
+  [data-theme="dark"] .nivel-positivo { --nv:#4ade80; }
+  .consult-chip { background:var(--nv-bg); color:var(--nv); }
+  .consult-prioridades { background:var(--surface-0); border:1px solid var(--border); border-left:4px solid var(--red); border-radius:4px; padding:14px 18px; margin-bottom:16px; }
+  .consult-prioridades h4 { font-size:12px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:var(--red); margin-bottom:8px; }
+  .consult-prioridades ol { padding-left:20px; display:flex; flex-direction:column; gap:5px; font-size:13px; color:var(--text); line-height:1.45; }
+  .consult-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:14px; }
+  .consult-card { background:var(--surface-0); border:1px solid var(--border); border-left:4px solid var(--nv); border-radius:4px; padding:14px 16px; display:flex; flex-direction:column; gap:8px; }
+  .consult-card-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .consult-tag { font-size:10px; font-weight:800; letter-spacing:1px; text-transform:uppercase; padding:2px 8px; border-radius:10px; background:var(--nv-bg); color:var(--nv); }
+  .consult-area { font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+  .consult-titulo { font-size:15px; font-weight:700; color:var(--text); }
+  .consult-diag { font-size:13px; color:var(--text-soft); line-height:1.5; }
+  .consult-rec { font-size:13px; color:var(--text); line-height:1.5; background:var(--card); border:1px dashed var(--line); border-radius:4px; padding:8px 10px; }
+  .consult-rec b { color:var(--nv); }
+  @media(max-width:768px){ .consult-grid { grid-template-columns:1fr; } }
+
   /* ===== MARCA D'ÁGUA ===== */
   :root, [data-theme="light"] { --wm-opacity: .06; }
   [data-theme="dark"] { --wm-opacity: .07; }
@@ -655,6 +718,10 @@
             <div class="page-subtitle">Visão geral — apenas clientes potenciais</div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-outline" onclick="gerarPDFDashboard()" style="display:flex;align-items:center;gap:6px;color:#ef4444;border-color:#ef4444">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+              PDF
+            </button>
             <button class="btn btn-outline" onclick="exportJSON()">⬇ Exportar JSON</button>
           </div>
         </div>
@@ -683,6 +750,14 @@
           </select>
         </div>
         <div class="stat-grid" id="stat-grid"></div>
+        <div class="chart-section aprov-chart-section">
+          <div class="aprov-head">
+            <div class="chart-title" id="aprov-chart-title">✅ Aprovados por Mês</div>
+            <div class="aprov-resumo" id="aprov-resumo"></div>
+          </div>
+          <div class="aprov-scroll"><div class="aprov-chart" id="chart-aprovados"></div></div>
+          <div class="aprov-legenda">Barra = valor aprovado no mês · % = quanto do valor orçado no mês foi aprovado. Passe o mouse na barra para ver os detalhes.</div>
+        </div>
         <div class="charts-grid">
           <div class="chart-section">
             <div class="chart-title">📅 Orçamentos por Mês</div>
@@ -696,6 +771,17 @@
             <div class="chart-title">❌ Motivos de Perda</div>
             <div class="donut-wrap" id="motivos-wrap"></div>
           </div>
+        </div>
+        <div class="chart-section consult-section">
+          <div class="consult-head">
+            <div>
+              <div class="chart-title">💡 Parecer de Consultoria — Análise e Recomendações</div>
+              <div class="consult-sub" id="consult-sub">Diagnóstico automático com base nos dados atuais do sistema</div>
+            </div>
+            <div class="consult-resumo" id="consult-resumo"></div>
+          </div>
+          <div class="consult-prioridades" id="consult-prioridades"></div>
+          <div class="consult-grid" id="consult-grid"></div>
         </div>
       </div>
 
@@ -2096,6 +2182,8 @@ function renderAll() {
   renderStats();
   renderTableFull();
   renderChartMensal();
+  renderChartAprovados();
+  renderConsultoria();
   renderDonut();
   renderRelatorio();
   renderDetalhamento();
@@ -2224,6 +2312,480 @@ function filterTable(q) {
 }
 
 // ===== CHARTS — só potenciais =====
+// ===================================================================
+// ===== PARECER DE CONSULTORIA (análise automática dos dados) =====
+// ===================================================================
+function escHTML(t) {
+  return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+function _dias(iniISO, fimISO) {
+  if (!iniISO) return null;
+  const a = new Date(iniISO + 'T00:00:00');
+  const b = fimISO ? new Date(fimISO + 'T00:00:00') : new Date();
+  if (isNaN(a) || isNaN(b)) return null;
+  return Math.round((b - a) / 86400000);
+}
+function _soma(lista) { return lista.reduce((a, o) => a + (Number(o.valor) || 0), 0); }
+function _mediana(arr) {
+  if (!arr.length) return 0;
+  const s = [...arr].sort((a, b) => a - b), m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2);
+}
+function _pct(parte, total) { return total > 0 ? parte / total * 100 : 0; }
+function _listaProj(itens) {
+  return itens.map(o => `#${escHTML(o.num)} ${escHTML(o.cliente)} (${fmtBRL(Number(o.valor) || 0)})`).join('; ');
+}
+
+const NIVEIS = {
+  critico:      { ordem:0, rotulo:'Crítico',      plural:'Críticos' },
+  atencao:      { ordem:1, rotulo:'Atenção',      plural:'Atenção' },
+  oportunidade: { ordem:2, rotulo:'Oportunidade', plural:'Oportunidades' },
+  positivo:     { ordem:3, rotulo:'Ponto forte',  plural:'Pontos fortes' },
+};
+
+function gerarDiagnostico() {
+  const ano = document.getElementById('dash-ano-filter') ? document.getElementById('dash-ano-filter').value : '';
+  const hojeISO = dateToISO(new Date());
+  const pot = potenciais().filter(o => !ano || String(o.data || '').startsWith(ano));
+  const achados = [];
+  const add = (nivel, area, titulo, diagnostico, recomendacao, prioridade) =>
+    achados.push({ nivel, area, titulo, diagnostico, recomendacao, prioridade: prioridade || titulo });
+
+  // ---------- COMERCIAL ----------
+  const enviados = pot.filter(o => o.situacao === 'Enviado para Cliente' || o.situacao === 'Aguardando Cliente');
+  const aprov = pot.filter(o => o.situacao === 'Aprovado');
+  const reprov = pot.filter(o => o.situacao === 'Reprovado');
+
+  if (enviados.length) {
+    const idade = o => _dias(o.data) || 0;
+    const v30 = enviados.filter(o => idade(o) > 30);
+    const v60 = enviados.filter(o => idade(o) > 60);
+    const v90 = enviados.filter(o => idade(o) > 90);
+    const nivel = _pct(v60.length, enviados.length) >= 40 ? 'critico' : v30.length ? 'atencao' : 'positivo';
+    add(nivel, 'Comercial', 'Funil de propostas parado',
+      `${enviados.length} propostas aguardam resposta do cliente, somando ${fmtBRL(_soma(enviados))}. ` +
+      `${v30.length} estão sem decisão há mais de 30 dias e ${v90.length} há mais de 90 dias (${fmtBRL(_soma(v90))}).`,
+      `Implantar uma régua de follow-up: contato em D+3, D+7, D+15 e D+30 após o envio, e validade de 30 dias na proposta. ` +
+      `Propostas sem retorno após 90 dias devem ser encerradas como "Reprovado" com o motivo "Sem retorno" (ou marcadas como não potenciais). ` +
+      `Isso limpa o funil, deixa os indicadores realistas e mostra onde a equipe deve focar.`,
+      `Revisar as ${v90.length} propostas com mais de 90 dias e aplicar a régua de follow-up nas demais`);
+
+    const comFU = enviados.filter(o => o.followupStatus || (Array.isArray(o.followUps) && o.followUps.length));
+    const cob = _pct(comFU.length, enviados.length);
+    if (enviados.length >= 5 && cob < 50) {
+      add('atencao', 'Comercial', 'Follow-ups pouco registrados',
+        `Só ${comFU.length} das ${enviados.length} propostas em aberto (${fmtPct(cob)}) têm follow-up registrado no sistema.`,
+        `Registrar cada contato com o cliente pelo botão de follow-up. Isso cria histórico, evita que propostas caiam no esquecimento ` +
+        `quando alguém da equipe falta e permite medir quantos contatos, em média, são necessários para fechar um projeto.`,
+        'Registrar todos os follow-ups no sistema');
+    }
+
+    const top = [...enviados].sort((a, b) => (b.valor || 0) - (a.valor || 0)).slice(0, 5);
+    add('oportunidade', 'Comercial', 'Maiores propostas em aberto',
+      `As ${top.length} maiores propostas pendentes somam ${fmtBRL(_soma(top))} (${fmtPct(_pct(_soma(top), _soma(enviados)))} do valor em aberto): ${_listaProj(top)}.`,
+      `Concentrar a energia comercial nessas propostas: contato direto do responsável ou visita, reapresentação com alternativas de escopo, ` +
+      `material ou forma de pagamento, e uma data combinada com o cliente para a decisão.`,
+      'Contato direto com as 5 maiores propostas pendentes');
+  }
+
+  const decididos = aprov.length + reprov.length;
+  if (decididos) {
+    const taxaDec = _pct(aprov.length, decididos);
+    const taxaReal = _pct(aprov.length, decididos + enviados.length);
+    const nivel = taxaReal >= 45 ? 'positivo' : taxaReal >= 30 ? 'atencao' : 'critico';
+    const gap = taxaDec - taxaReal;
+    add(nivel, 'Comercial', 'Taxa de aprovação',
+      `Das propostas já decididas, ${fmtPct(taxaDec)} foram aprovadas. Contando também as que seguem em aberto, ` +
+      `a conversão real é de ${fmtPct(taxaReal)} (${aprov.length} de ${decididos + enviados.length}).`,
+      gap >= 20
+        ? `A diferença entre as duas taxas mostra que o problema não é perder para concorrentes, e sim propostas que ficam sem resposta. ` +
+          `O maior ganho está em acelerar a decisão do cliente (follow-up, validade da proposta, facilidade de pagamento).`
+        : `Acompanhar essa taxa todo mês e comparar por vendedor e por tipo de serviço, para replicar o que funciona melhor.`);
+  }
+
+  // Faixas de valor
+  const faixas = [[0, 5000, 'até R$ 5 mil'], [5000, 20000, 'de R$ 5 a 20 mil'], [20000, 50000, 'de R$ 20 a 50 mil'], [50000, Infinity, 'acima de R$ 50 mil']]
+    .map(([a, b, nome]) => {
+      const itens = pot.filter(o => (o.valor || 0) >= a && (o.valor || 0) < b && ['Aprovado', 'Reprovado', 'Enviado para Cliente', 'Aguardando Cliente'].includes(o.situacao));
+      return { nome, n: itens.length, taxa: _pct(itens.filter(o => o.situacao === 'Aprovado').length, itens.length) };
+    }).filter(f => f.n >= 8);
+  if (faixas.length >= 2) {
+    const melhor = faixas.reduce((a, b) => b.taxa > a.taxa ? b : a);
+    const pior = faixas.reduce((a, b) => b.taxa < a.taxa ? b : a);
+    if (melhor.taxa - pior.taxa >= 15) {
+      add('oportunidade', 'Comercial', `Conversão baixa nos orçamentos ${pior.nome}`,
+        `Orçamentos ${pior.nome} são aprovados em ${fmtPct(pior.taxa)} dos casos (${pior.n} propostas), ` +
+        `contra ${fmtPct(melhor.taxa)} nos orçamentos ${melhor.nome}.`,
+        `Revisar como as propostas dessa faixa são apresentadas: visita técnica antes de orçar, proposta com 2 ou 3 opções ` +
+        `(básica, intermediária e completa), parcelamento e prazo de validade. Vale também comparar preços com a concorrência nessa faixa.`);
+    }
+  }
+
+  // Motivos de perda
+  if (reprov.length) {
+    const cont = {};
+    reprov.forEach(o => { const m = String(o.motivoPerda || 'Não informado').trim().toUpperCase() || 'NÃO INFORMADO'; cont[m] = (cont[m] || 0) + 1; });
+    const ranking = Object.entries(cont).sort((a, b) => b[1] - a[1]);
+    const vagos = reprov.filter(o => { const m = String(o.motivoPerda || '').trim().toUpperCase(); return !m || m === 'NÃO INFORMADO' || m === 'NAO INFORMADO' || m.length < 4; }).length;
+    const txt = ranking.slice(0, 3).map(([m, n]) => `${escHTML(m.charAt(0) + m.slice(1).toLowerCase())} (${n})`).join(', ');
+    let rec = `Padronizar os motivos de perda em uma lista fixa (Preço, Prazo, Concorrente, Cliente desistiu, Escopo alterado, Sem retorno) para que os números possam ser comparados mês a mês.`;
+    if (ranking.some(([m]) => m.includes('PREÇ') || m.includes('PREC') || m.includes('$'))) rec += ` Preço aparece entre os motivos: avaliar margens por tipo de serviço e oferecer alternativas de material ou acabamento antes de perder a venda.`;
+    if (ranking.some(([m]) => m.includes('MARCENARIA') || m.includes('CONCORR') || m.includes('OUTRO'))) rec += ` Há perdas para outros fornecedores (ex.: marcenaria): reforçar na proposta os diferenciais do metal — durabilidade, garantia e prazo.`;
+    add(vagos > reprov.length / 3 ? 'atencao' : 'oportunidade', 'Comercial', 'Motivos de perda',
+      `${reprov.length} propostas reprovadas (${fmtBRL(_soma(reprov))}). Principais motivos: ${txt}. ${vagos} sem motivo claro.`, rec,
+      'Padronizar os motivos de perda');
+  }
+
+  // ---------- OPERAÇÃO (situação atual, independente do ano) ----------
+  const ativo = o => o.situacao === 'Aprovado' && o.statusProducao !== 'Em Produção' && o.statusProducao !== 'Concluído';
+  const aguardDet = orcamentos.filter(o => ativo(o) && (o.statusDetalhamento || 'Aguardando') === 'Aguardando');
+  if (aguardDet.length) {
+    const antigos = aguardDet.filter(o => (_dias(o.data) || 0) > 60).sort((a, b) => (_dias(b.data) || 0) - (_dias(a.data) || 0));
+    add(antigos.length >= 5 ? 'critico' : 'atencao', 'Detalhamento', 'Projetos aprovados parados antes do detalhamento',
+      `${aguardDet.length} projetos aprovados ainda não começaram o detalhamento (${fmtBRL(_soma(aguardDet))}). ` +
+      `${antigos.length} deles têm orçamento com mais de 60 dias` + (antigos.length ? `, por exemplo: ${_listaProj(antigos.slice(0, 3))}.` : '.'),
+      `Revisar essa lista com a equipe e confirmar se cada projeto segue ativo (medidas, sinal pago, cliente pronto). ` +
+      `Definir um prazo padrão — por exemplo, iniciar o detalhamento em até 7 dias após a aprovação — e um responsável por projeto. ` +
+      `Projetos cancelados devem voltar para "Reprovado", para não distorcer os indicadores.`,
+      `Revisar os ${aguardDet.length} aprovados sem detalhamento e definir responsável e data de início`);
+  }
+
+  const detCli = orcamentos.filter(o => ativo(o) && o.statusDetalhamento === 'Aguardando Cliente');
+  if (detCli.length) {
+    add('atencao', 'Detalhamento', 'Detalhamentos esperando o cliente',
+      `${detCli.length} detalhamentos estão parados aguardando retorno do cliente: ${_listaProj(detCli.slice(0, 4))}${detCli.length > 4 ? '…' : '.'}`,
+      `Registrar na observação exatamente o que falta (medida, aprovação do desenho, escolha de acabamento) e combinar um prazo com o cliente. ` +
+      `Um lembrete semanal para esses casos evita que o projeto trave a fila de produção.`);
+  }
+
+  const filaProd = orcamentos.filter(o => o.situacao === 'Aprovado' && o.statusDetalhamento === 'Concluído' && (!o.statusProducao || o.statusProducao === 'Não Iniciado'));
+  if (filaProd.length) {
+    add('atencao', 'Produção', 'Fila para produção',
+      `${filaProd.length} projetos já têm o detalhamento concluído e aguardam início da produção (${fmtBRL(_soma(filaProd))}).`,
+      `Montar a programação semanal de produção usando o Gantt, com a data de início de cada projeto. ` +
+      `Uma fila visível ajuda a prometer prazos corretos ao cliente e a equilibrar a carga da oficina.`);
+  }
+
+  const prodAtras = orcamentos.filter(o => o.statusProducao === 'Em Produção' && o.previsaoConclusaoProducao && o.previsaoConclusaoProducao < hojeISO);
+  const instAtras = orcamentos.filter(o => o.statusInstalacao === 'Em Instalação' && o.previsaoConclusaoInstalacao && o.previsaoConclusaoInstalacao < hojeISO);
+  if (prodAtras.length || instAtras.length) {
+    add('critico', 'Prazos', 'Prazos vencidos',
+      `${prodAtras.length} produção(ões) e ${instAtras.length} instalação(ões) passaram da data prevista de conclusão` +
+      `${prodAtras.concat(instAtras).length ? ': ' + _listaProj(prodAtras.concat(instAtras).slice(0, 4)) : ''}.`,
+      `Reprogramar esses projetos hoje, atualizar a previsão no sistema e avisar o cliente antes que ele precise cobrar. ` +
+      `Anotar a causa do atraso (material, mão de obra, cliente, clima) para atacar a causa mais frequente.`,
+      'Reprogramar os projetos com prazo vencido e avisar os clientes');
+  }
+
+  // Qualidade do registro de datas
+  const detConc = orcamentos.filter(o => o.statusDetalhamento === 'Concluído' && o.inicioDetalhamento && o.fimDetalhamento);
+  const detMesmoDia = detConc.filter(o => o.inicioDetalhamento === o.fimDetalhamento).length;
+  const instConc = orcamentos.filter(o => o.statusInstalacao === 'Concluído' && o.inicioInstalacao && o.previsaoConclusaoInstalacao);
+  const instMesmoDia = instConc.filter(o => o.inicioInstalacao === o.previsaoConclusaoInstalacao).length;
+  if (detConc.length >= 10 && _pct(detMesmoDia, detConc.length) >= 40) {
+    add('atencao', 'Gestão de prazos', 'Datas lançadas depois do trabalho feito',
+      `${fmtPct(_pct(detMesmoDia, detConc.length))} dos detalhamentos concluídos têm início e fim na mesma data` +
+      (instConc.length >= 10 ? `, e o mesmo acontece em ${fmtPct(_pct(instMesmoDia, instConc.length))} das instalações` : '') +
+      `. Isso indica que as datas são registradas no fechamento, e não em tempo real — o tempo real de cada etapa fica invisível.`,
+      `Marcar "Em Andamento" com a data de início no dia em que a etapa começa, e "Concluído" no dia em que termina. ` +
+      `Com isso o sistema passa a mostrar o lead time real de detalhamento, produção e instalação, e fica claro onde está o gargalo.`,
+      'Registrar início e fim das etapas no dia em que acontecem');
+  }
+
+  // Ciclo total
+  const ciclos = orcamentos.filter(o => o.statusInstalacao === 'Concluído' && o.data && o.previsaoConclusaoInstalacao)
+    .map(o => _dias(o.data, o.previsaoConclusaoInstalacao)).filter(d => d != null && d >= 0);
+  const prodDur = orcamentos.filter(o => o.inicioProducao && o.previsaoConclusaoProducao)
+    .map(o => _dias(o.inicioProducao, o.previsaoConclusaoProducao)).filter(d => d != null && d >= 0);
+  if (ciclos.length >= 5) {
+    const med = _mediana(ciclos);
+    add(med > 60 ? 'atencao' : 'positivo', 'Operação', 'Prazo total do projeto',
+      `Do orçamento até a instalação concluída, o prazo mediano é de ${med} dias (${ciclos.length} projetos entregues)` +
+      (prodDur.length >= 5 ? `. A produção leva em média ${_mediana(prodDur)} dias entre início e conclusão prevista.` : '.'),
+      `Usar esse número como referência ao prometer prazos ao cliente e definir uma meta de redução (por exemplo, 10% no próximo trimestre), acompanhando mês a mês.`);
+  }
+
+  // ---------- FINANCEIRO ----------
+  const entregues = orcamentos.filter(o => o.statusInstalacao === 'Concluído');
+  if (entregues.length) {
+    const naoLancados = entregues.filter(o => !o.statusCobranca && !(Array.isArray(o.pagamentos) && o.pagamentos.length));
+    const pendentes = entregues.filter(o => o.statusCobranca === 'Pendente' || o.statusCobranca === 'Parcial');
+    if (_pct(naoLancados.length, entregues.length) >= 50) {
+      add('critico', 'Financeiro', 'Cobrança não registrada no sistema',
+        `${naoLancados.length} de ${entregues.length} projetos entregues (${fmtBRL(_soma(naoLancados))}) não têm a cobrança lançada.`,
+        `Registrar na tela Cobrança a forma de pagamento, as parcelas e cada recebimento. Sem isso não é possível saber quanto falta receber ` +
+        `nem identificar atrasos. Sugestão de regra: o projeto só é considerado encerrado depois que a cobrança for lançada.`,
+        'Lançar a cobrança de todos os projetos entregues');
+    } else if (pendentes.length) {
+      add('atencao', 'Financeiro', 'Recebimentos pendentes',
+        `${pendentes.length} projetos entregues estão com pagamento pendente ou parcial (${fmtBRL(_soma(pendentes))}).`,
+        `Fazer uma revisão semanal dos recebimentos e contatar os clientes com parcelas vencidas.`);
+    }
+  }
+
+  const aprovTodos = orcamentos.filter(o => o.situacao === 'Aprovado' && !o.naoPotencial && (!ano || String(o.data || '').startsWith(ano)));
+  if (aprovTodos.length >= 10) {
+    const ord = [...aprovTodos].sort((a, b) => (b.valor || 0) - (a.valor || 0));
+    const share = _pct(_soma(ord.slice(0, 5)), _soma(ord));
+    const ticket = _soma(ord) / ord.length;
+    add(share >= 40 ? 'atencao' : 'positivo', 'Financeiro', 'Concentração da carteira',
+      `Os 5 maiores projetos aprovados representam ${fmtPct(share)} do valor aprovado. Ticket médio: ${fmtBRL(ticket)}.`,
+      share >= 40
+        ? `A empresa depende de poucos projetos grandes. Vale fortalecer a prospecção de projetos médios e recorrentes (condomínios, construtoras, manutenção) para reduzir o risco.`
+        : `A carteira está bem distribuída, o que reduz o risco. Manter a prospecção equilibrada entre projetos pequenos e grandes.`);
+  }
+
+  // ---------- QUALIDADE DOS DADOS ----------
+  const contNum = {};
+  orcamentos.forEach(o => { if (o.num) contNum[o.num] = (contNum[o.num] || 0) + 1; });
+  const dup = Object.keys(contNum).filter(n => contNum[n] > 1);
+  if (dup.length) {
+    add('atencao', 'Qualidade dos dados', 'Números de projeto repetidos',
+      `${dup.length} números de projeto aparecem em mais de um registro (ex.: ${dup.slice(0, 6).join(', ')}).`,
+      `Usar um número único por projeto. Para revisões do mesmo orçamento, usar sufixo (ex.: 1472-A, 1472-B) ou atualizar o registro existente. ` +
+      `Números repetidos causam confusão na busca e na comunicação entre as equipes.`);
+  }
+  if (aprovTodos.length >= 10) {
+    const semObs = aprovTodos.filter(o => !String(o.obsGeral || '').trim()).length;
+    if (_pct(semObs, aprovTodos.length) >= 50) {
+      add('oportunidade', 'Qualidade dos dados', 'Escopo dos projetos pouco documentado',
+        `${fmtPct(_pct(semObs, aprovTodos.length))} dos projetos aprovados não têm observação geral preenchida.`,
+        `Registrar no campo de observações o escopo combinado, materiais, cores e condições especiais. Isso reduz retrabalho entre ` +
+        `vendas, detalhamento, produção e instalação, e protege a empresa em caso de divergência com o cliente.`);
+    }
+  }
+
+  achados.sort((a, b) => NIVEIS[a.nivel].ordem - NIVEIS[b.nivel].ordem);
+  return achados;
+}
+
+function renderConsultoria() {
+  const grid = document.getElementById('consult-grid');
+  if (!grid) return;
+  const achados = gerarDiagnostico();
+  const ano = document.getElementById('dash-ano-filter') ? document.getElementById('dash-ano-filter').value : '';
+  const sub = document.getElementById('consult-sub');
+  if (sub) sub.textContent = 'Diagnóstico automático com base nos dados atuais do sistema' + (ano ? ` — indicadores comerciais de ${ano}` : '');
+
+  const cont = {};
+  achados.forEach(a => { cont[a.nivel] = (cont[a.nivel] || 0) + 1; });
+  document.getElementById('consult-resumo').innerHTML = Object.keys(NIVEIS).filter(n => cont[n])
+    .map(n => `<span class="consult-chip nivel-${n}">${cont[n]} ${cont[n] > 1 ? NIVEIS[n].plural : NIVEIS[n].rotulo}</span>`).join('');
+
+  const prioridades = achados.filter(a => a.nivel === 'critico' || a.nivel === 'atencao').slice(0, 4);
+  document.getElementById('consult-prioridades').innerHTML = prioridades.length
+    ? `<h4>🎯 Prioridades para os próximos 30 dias</h4><ol>${prioridades.map(p => `<li>${p.prioridade}</li>`).join('')}</ol>`
+    : `<h4>🎯 Prioridades</h4><div style="font-size:13px;color:var(--text)">Nenhum ponto crítico encontrado. Manter o acompanhamento mensal dos indicadores.</div>`;
+  document.getElementById('consult-prioridades').style.display = achados.length ? '' : 'none';
+
+  grid.innerHTML = achados.length ? achados.map(a => `
+    <div class="consult-card nivel-${a.nivel}">
+      <div class="consult-card-top"><span class="consult-tag">${NIVEIS[a.nivel].rotulo}</span><span class="consult-area">${a.area}</span></div>
+      <div class="consult-titulo">${a.titulo}</div>
+      <div class="consult-diag">${a.diagnostico}</div>
+      <div class="consult-rec"><b>👉 Recomendação:</b> ${a.recomendacao}</div>
+    </div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:13px">Ainda não há dados suficientes para a análise.</div>';
+}
+
+// ===================================================================
+// ===== PDF DO DASHBOARD =====
+// ===================================================================
+function gerarPDFDashboard() {
+  renderAll();
+  const mesEl = document.getElementById('dash-mes-filter'), anoEl = document.getElementById('dash-ano-filter');
+  const mesTxt = mesEl && mesEl.value ? mesEl.options[mesEl.selectedIndex].text : 'Todos os meses';
+  const anoTxt = anoEl && anoEl.value ? anoEl.value : 'Todos os anos';
+  const agora = new Date();
+  const dataHora = agora.toLocaleDateString('pt-BR') + ' ' + agora.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+  const logoEl = document.querySelector('.topbar-logo-img');
+  const logo = logoEl ? logoEl.src : '';
+
+  // Indicadores (cartões do Dashboard)
+  const kpis = [...document.querySelectorAll('#stat-grid .stat-card')].map(c => ({
+    label: c.querySelector('.stat-label').textContent, valor: c.querySelector('.stat-value').textContent,
+    sub: c.querySelector('.stat-sub').textContent, cor: c.style.getPropertyValue('--accent') || '#C32433',
+  }));
+
+  // Aprovados por mês
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const orc = Array(12).fill(0), apr = Array(12).fill(0), qtd = Array(12).fill(0);
+  potenciais().forEach(o => {
+    if (!o.data) return;
+    const p = o.data.split('-');
+    if (anoEl && anoEl.value && p[0] !== anoEl.value) return;
+    const m = parseInt(p[1], 10) - 1; if (isNaN(m) || m < 0 || m > 11) return;
+    const v = Number(o.valor) || 0; orc[m] += v;
+    if (o.situacao === 'Aprovado') { apr[m] += v; qtd[m]++; }
+  });
+  const maxA = Math.max(...apr) || 1;
+  const linhasMes = meses.map((n, i) => `<tr>
+      <td>${n}</td><td class="num">${orc[i] ? fmtBRL(orc[i]) : '—'}</td><td class="num verde">${apr[i] ? fmtBRL(apr[i]) : '—'}</td>
+      <td class="num">${qtd[i] || '—'}</td><td class="num">${orc[i] ? fmtPct(_pct(apr[i], orc[i])) : '—'}</td>
+      <td class="barcel"><div class="bar" style="width:${(apr[i] / maxA * 100).toFixed(1)}%"></div></td></tr>`).join('');
+  const tO = orc.reduce((a, b) => a + b, 0), tA = apr.reduce((a, b) => a + b, 0), tQ = qtd.reduce((a, b) => a + b, 0);
+  const colunas = meses.map((n, i) => `<div class="col">
+      <div class="cb"><div class="cv">${apr[i] ? fmtBRLCurto(apr[i]) : ''}</div><div class="cbar" style="height:${apr[i] ? Math.max(apr[i] / maxA * 85, 2) : 0}%"></div></div>
+      <div class="cm">${n.slice(0, 3).toUpperCase()}</div><div class="cp">${orc[i] ? fmtPct(_pct(apr[i], orc[i])) : '—'}</div></div>`).join('');
+
+  const donut = (document.getElementById('donut-wrap') || {}).innerHTML || '';
+  const motivos = (document.getElementById('motivos-wrap') || {}).innerHTML || '';
+
+  const achados = gerarDiagnostico();
+  const prioridades = achados.filter(a => a.nivel === 'critico' || a.nivel === 'atencao').slice(0, 4);
+  const cores = { critico:'#dc2626', atencao:'#d97706', oportunidade:'#2563eb', positivo:'#16a34a' };
+  const cards = achados.map(a => `<div class="card" style="border-left-color:${cores[a.nivel]}">
+      <div class="ctop"><span class="tag" style="background:${cores[a.nivel]}">${NIVEIS[a.nivel].rotulo}</span><span class="area">${a.area}</span></div>
+      <div class="ct">${a.titulo}</div><div class="cd">${a.diagnostico}</div>
+      <div class="cr"><b style="color:${cores[a.nivel]}">Recomendação:</b> ${a.recomendacao}</div></div>`).join('');
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Dashboard — Fermar</title>
+<style>
+  :root { --card:#fff; --text:#1b1b1f; --text-muted:#6b6b75; --text-soft:#3f3f46; --surface-0:#f8f8fa; --line:#d4d4da; --line-soft:#ececf0; }
+  * { box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body { font-family:Arial,Helvetica,sans-serif; margin:0; padding:22px; color:#1b1b1f; font-size:12px; }
+  .header { display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid #C32433; padding-bottom:10px; margin-bottom:14px; gap:16px; }
+  .header img { height:46px; }
+  .htxt { flex:1; }
+  .htxt .t { font-size:18px; font-weight:900; color:#C32433; text-transform:uppercase; letter-spacing:.5px; }
+  .htxt .s { font-size:12px; color:#555; margin-top:2px; }
+  .info { font-size:11px; color:#777; text-align:right; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:1.5px; color:#C32433; margin:18px 0 8px; border-bottom:1px solid #eee; padding-bottom:4px; }
+  .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .kpi { border:1px solid #e2e2e7; border-top:3px solid; border-radius:4px; padding:8px 10px; }
+  .kpi .l { font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#6b6b75; }
+  .kpi .v { font-size:20px; font-weight:800; margin:2px 0; }
+  .kpi .sb { font-size:10px; color:#6b6b75; }
+  .cols { display:flex; align-items:flex-end; gap:6px; border-bottom:1px solid #ccc; padding-top:6px; }
+  .col { flex:1; display:flex; flex-direction:column; align-items:center; }
+  .cb { height:130px; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; }
+  .cbar { width:60%; background:#22c55e; border-radius:3px 3px 0 0; }
+  .cv { font-size:9px; font-weight:700; white-space:nowrap; margin-bottom:3px; }
+  .cm { font-size:10px; font-weight:700; color:#555; margin-top:4px; }
+  .cp { font-size:9px; font-weight:700; color:#15803d; }
+  table { width:100%; border-collapse:collapse; margin-top:10px; }
+  th { background:#C32433; color:#fff; font-size:10px; text-transform:uppercase; padding:5px; text-align:left; }
+  td { padding:4px 5px; border-bottom:1px solid #eee; font-size:11px; }
+  td.num { text-align:right; } td.verde { color:#15803d; font-weight:700; }
+  tr.tot td { font-weight:800; background:#f3f4f6; }
+  .barcel { width:22%; } .bar { height:9px; background:#22c55e; border-radius:2px; }
+  .duo { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .donut-wrap { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+  .legend { display:flex; flex-direction:column; gap:6px; }
+  .legend-item { display:flex; align-items:center; gap:6px; font-size:11px; }
+  .legend-dot { width:10px; height:10px; border-radius:2px; }
+  .legend-val { font-weight:700; margin-left:auto; padding-left:10px; }
+  .prio { background:#fdf2f3; border-left:4px solid #C32433; padding:8px 12px; border-radius:3px; }
+  .prio ol { margin:4px 0 0; padding-left:18px; } .prio li { margin:3px 0; }
+  .cards { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  .card { border:1px solid #e2e2e7; border-left:4px solid; border-radius:4px; padding:8px 10px; break-inside:avoid; page-break-inside:avoid; }
+  .ctop { display:flex; gap:6px; align-items:center; }
+  .tag { color:#fff; font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:1px; padding:2px 6px; border-radius:8px; }
+  .area { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#777; }
+  .ct { font-size:12px; font-weight:800; margin:4px 0 3px; }
+  .cd { font-size:10.5px; color:#3f3f46; line-height:1.4; }
+  .cr { font-size:10.5px; line-height:1.4; margin-top:5px; background:#f8f8fa; padding:5px 7px; border-radius:3px; }
+  .quebra { page-break-before:always; break-before:page; }
+  .rodape { margin-top:16px; font-size:9px; color:#999; text-align:right; border-top:1px solid #eee; padding-top:5px; }
+  @page { size:A4 portrait; margin:10mm; }
+  @media print { body { padding:0; } }
+</style></head><body>
+  <div class="header">
+    ${logo ? `<img src="${logo}" alt="Fermar">` : ''}
+    <div class="htxt"><div class="t">Sistema de Gestão de Projetos Fermar</div><div class="s">Relatório do Dashboard — Período: ${mesTxt} / ${anoTxt}</div></div>
+    <div class="info">Gerado em: ${dataHora}${currentUser ? '<br>Por: ' + escHTML(currentUser.name) : ''}</div>
+  </div>
+
+  <h2>Indicadores gerais</h2>
+  <div class="kpis">${kpis.map(k => `<div class="kpi" style="border-top-color:${k.cor}"><div class="l">${k.label}</div><div class="v">${k.valor}</div><div class="sb">${k.sub}</div></div>`).join('')}</div>
+
+  <h2>Aprovados por mês — ${anoTxt}</h2>
+  <div class="cols">${colunas}</div>
+  <table><thead><tr><th>Mês</th><th style="text-align:right">Orçado</th><th style="text-align:right">Aprovado</th><th style="text-align:right">Qtd.</th><th style="text-align:right">Taxa</th><th></th></tr></thead>
+  <tbody>${linhasMes}<tr class="tot"><td>Total</td><td class="num">${fmtBRL(tO)}</td><td class="num verde">${fmtBRL(tA)}</td><td class="num">${tQ}</td><td class="num">${fmtPct(_pct(tA, tO))}</td><td></td></tr></tbody></table>
+
+  <div class="duo">
+    <div><h2>Distribuição por fase</h2><div class="donut-wrap">${donut}</div></div>
+    <div><h2>Motivos de perda</h2><div class="donut-wrap">${motivos}</div></div>
+  </div>
+
+  <div class="quebra"></div>
+  <h2>Parecer de consultoria — análise e recomendações</h2>
+  ${prioridades.length ? `<div class="prio"><b>Prioridades para os próximos 30 dias</b><ol>${prioridades.map(p => `<li>${p.prioridade}</li>`).join('')}</ol></div>` : ''}
+  <div class="cards">${cards || '<div>Ainda não há dados suficientes para a análise.</div>'}</div>
+
+  <div class="rodape">Fermar – Sistema de Gestão de Projetos | ${dataHora}</div>
+</body></html>`;
+
+  const win = window.open('', '_blank', 'width=1000,height=800');
+  if (!win) { showToast('Permita pop-ups para gerar o PDF', 'error'); return; }
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); }, 700);
+}
+
+// ===== GRÁFICO: APROVADOS POR MÊS (JAN–DEZ) =====
+function fmtBRLCurto(v) {
+  if (v >= 1e6) return 'R$ ' + (v/1e6).toLocaleString('pt-BR', { maximumFractionDigits:2 }) + ' mi';
+  if (v >= 1e3) return 'R$ ' + (v/1e3).toLocaleString('pt-BR', { maximumFractionDigits:1 }) + ' mil';
+  return fmtBRL(v);
+}
+
+function fmtPct(v) { return v.toLocaleString('pt-BR', { minimumFractionDigits:1, maximumFractionDigits:1 }) + '%'; }
+
+function renderChartAprovados() {
+  const el = document.getElementById('chart-aprovados');
+  if (!el) return;
+  const meses = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+  const nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const ano = document.getElementById('dash-ano-filter') ? document.getElementById('dash-ano-filter').value : '';
+  const mesSel = document.getElementById('dash-mes-filter') ? document.getElementById('dash-mes-filter').value : '';
+
+  // Sempre mostra o ano inteiro (jan–dez); o filtro de mês só destaca a coluna escolhida
+  const orcadoMes = Array(12).fill(0), aprovMes = Array(12).fill(0), qtdAprov = Array(12).fill(0);
+  potenciais().forEach(o => {
+    if (!o.data) return;
+    const partes = o.data.split('-');
+    if (ano && partes[0] !== ano) return;
+    const m = parseInt(partes[1], 10) - 1;
+    if (isNaN(m) || m < 0 || m > 11) return;
+    const v = Number(o.valor) || 0;
+    orcadoMes[m] += v;
+    if (o.situacao === 'Aprovado') { aprovMes[m] += v; qtdAprov[m]++; }
+  });
+
+  const max = Math.max(...aprovMes) || 1;
+  el.innerHTML = meses.map((m, i) => {
+    const temAprov = aprovMes[i] > 0;
+    const pct = orcadoMes[i] > 0 ? aprovMes[i] / orcadoMes[i] * 100 : 0;
+    const h = temAprov ? Math.max(aprovMes[i] / max * 100, 2) : 0;
+    const dica = `${nomes[i]}${ano ? ' ' + ano : ''}\nAprovado: ${fmtBRL(aprovMes[i])} (${qtdAprov[i]} orç.)\nOrçado: ${fmtBRL(orcadoMes[i])}\nTaxa de aprovação: ${fmtPct(pct)}`;
+    const sel = mesSel && parseInt(mesSel, 10) - 1 === i ? ' sel' : '';
+    return `<div class="aprov-col${sel}">
+      <div class="aprov-area">
+        <div class="aprov-barbox" style="flex-direction:column;justify-content:flex-end;align-items:center">
+          <div class="aprov-valor">${temAprov ? fmtBRLCurto(aprovMes[i]) : ''}</div>
+          <div class="aprov-bar${temAprov ? '' : ' vazio'}" style="height:${h * 0.86}%" title="${dica}"></div>
+        </div>
+      </div>
+      <div class="aprov-mes">${m}</div>
+      <div class="aprov-pct${orcadoMes[i] > 0 ? '' : ' vazio'}">${orcadoMes[i] > 0 ? fmtPct(pct) : '—'}</div>
+    </div>`;
+  }).join('');
+
+  const totAprov = aprovMes.reduce((a, b) => a + b, 0);
+  const totOrc = orcadoMes.reduce((a, b) => a + b, 0);
+  const totQtd = qtdAprov.reduce((a, b) => a + b, 0);
+  const titulo = document.getElementById('aprov-chart-title');
+  if (titulo) titulo.textContent = '✅ Aprovados por Mês' + (ano ? ' — ' + ano : ' — todos os anos');
+  const resumo = document.getElementById('aprov-resumo');
+  if (resumo) resumo.innerHTML = `
+    <div><small>Total aprovado</small><strong class="verde">${fmtBRL(totAprov)}</strong></div>
+    <div><small>Orçamentos aprovados</small><strong>${totQtd}</strong></div>
+    <div><small>Taxa de aprovação</small><strong>${fmtPct(totOrc > 0 ? totAprov / totOrc * 100 : 0)}</strong></div>`;
+}
+
 function renderChartMensal() {
   const months = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
   const byMonth      = Array(12).fill(0);
