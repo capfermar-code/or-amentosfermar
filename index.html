@@ -2278,7 +2278,7 @@ function renderStats() {
 function renderTable(data) {
   const showNP = document.getElementById('show-nao-pot').checked;
   const canEdit = hasEditPerm('orcamentos');
-  const canDel  = currentUser && (currentUser.role==='Administrador'||currentUser.role==='Vendedor');
+  const canDel  = podeExcluir();
 
   // Filtros de mês e ano
   const mesFil = (document.getElementById('orc-mes-filter')||{value:''}).value;
@@ -2321,7 +2321,7 @@ function renderTable(data) {
       <td style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--text-muted)">${calcLeadtime(o.data, o.conclusao||'')}</td>
       <td style="display:flex;gap:6px">
         ${canEdit?`<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editOrcamento(${idx})">Editar</button><button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:#22c55e;border-color:#22c55e" onclick="abrirAddPagamento(${o.num})">💰 Pgto</button>`:''}
-        ${canDel?`<button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:#f55;border-color:#f55" onclick="deleteOrcamento(${idx})">✕</button>`:''}
+        ${canDel?`<button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:#f55;border-color:#f55" onclick="excluirOrcamento(${idx},'Orçamentos')">🗑</button>`:''}
       </td>
     </tr>`;
   }).join('');
@@ -3377,11 +3377,37 @@ function saveOrcamento() {
   showToast(destino === 'direto' ? '⚡ Orçamento salvo e enviado para a Produção!' : destino === 'completo' ? '✓ Orçamento salvo e enviado para o Detalhamento!' : '✓ Orçamento salvo!','success');
 }
 
-function deleteOrcamento(i) {
-  if (!confirm('Excluir este orçamento?')) return;
-  orcamentos.splice(i,1); saveData(); renderAll();
-  showToast('✓ Excluído!','success');
+// ===== EXCLUIR (somente capfermar@gmail.com) =====
+const EMAIL_EXCLUSAO = 'capfermar@gmail.com';
+function podeExcluir() {
+  return !!(currentUser && (currentUser.email || '').toLowerCase() === EMAIL_EXCLUSAO);
 }
+function btnExcluir(idx, etapa) {
+  if (!podeExcluir()) return '';
+  return `<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#ef4444;border-color:#ef4444" title="Excluir definitivamente" onclick="excluirOrcamento(${idx},'${etapa}')">🗑</button>`;
+}
+function excluirOrcamento(idx, etapa) {
+  if (!podeExcluir()) { showToast('Apenas o administrador principal pode excluir.', 'error'); return; }
+  const o = orcamentos[idx];
+  if (!o) { showToast('Ordem não encontrada! Atualize a página.', 'error'); return; }
+  document.getElementById('modal-excluir-title').textContent = 'Excluir orçamento' + (o.num !== '' && o.num != null ? ' #' + o.num : '') + '?';
+  document.getElementById('modal-excluir-info').innerHTML =
+    '<b>' + escHTML(o.cliente || '') + '</b> — ' + fmtBRL(o.valor) +
+    (etapa ? '<br><span style="font-size:12px;color:var(--text-muted)">Etapa atual: ' + escHTML(etapa) + '</span>' : '') +
+    '<br><span style="font-size:12px;color:#ef4444">Esta ação não pode ser desfeita e remove o orçamento de todas as telas, para todos os usuários.</span>';
+  document.getElementById('modal-excluir-confirm').onclick = () => {
+    // Localiza pelo próprio objeto: a lista pode ter mudado (tempo real) enquanto o aviso estava aberto
+    const pos = orcamentos.indexOf(o);
+    if (pos !== -1) orcamentos.splice(pos, 1);
+    saveData();
+    renderAll();
+    document.getElementById('modal-excluir').classList.remove('open');
+    showToast('🗑 "' + (o.cliente || '') + '" excluído!', 'success');
+  };
+  document.getElementById('modal-excluir').classList.add('open');
+}
+// Nomes antigos mantidos por compatibilidade
+function deleteOrcamento(i) { excluirOrcamento(i, ''); }
 
 // ===== EXPORT JSON =====
 function exportJSON() {
@@ -3660,7 +3686,7 @@ function renderProducao() {
       <td>${fmtDate(o.previsaoConclusaoProducao)||'—'}</td>
       <td style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--text-muted)">${lt}</td>
       <td>${timerBtn(idx,'producao',o.producaoRunning,canEdit)}</td>
-      <td style="display:flex;gap:4px">${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editProducao(${idx})">Editar</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Detalhamento" onclick="reverterProducao(${idx})">↩</button>` : '—'}</td>
+      <td style="display:flex;gap:4px">${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editProducao(${idx})">Editar</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Detalhamento" onclick="reverterProducao(${idx})">↩</button>${btnExcluir(idx,'Produção')}` : '—'}</td>
     </tr>`;
   }).join('');
   startLiveTimers();
@@ -3761,7 +3787,7 @@ function renderInstalacao() {
       <td>${fmtDate(o.previsaoConclusaoInstalacao)||'—'}</td>
       <td style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--text-muted)">${lt}</td>
       <td>${timerBtn(idx,'instalacao',o.instalacaoRunning,canEdit)}</td>
-      <td style="display:flex;gap:4px">${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editInstalacao(${idx})">Editar</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Produção" onclick="reverterInstalacao(${idx})">↩</button>` : '—'}</td>
+      <td style="display:flex;gap:4px">${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editInstalacao(${idx})">Editar</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Produção" onclick="reverterInstalacao(${idx})">↩</button>${btnExcluir(idx,'Instalação')}` : '—'}</td>
     </tr>`;
   }).join('');
   startLiveTimers();
@@ -3893,7 +3919,7 @@ function renderDetalhamento() {
         <button class="${expandBtnClass}" onclick="toggleDetSubtasks(${o.num})">${expandLabel}</button>
         ${subSummary}
       </td>
-      <td style="white-space:nowrap">${canEdit ? `<div style="display:flex;gap:4px"><button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editDetalhamento(${idx})">Editar</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Retornar para Aguardando Cliente" onclick="reverterDetalhamento(${idx})">↩</button></div>` : '—'}</td>
+      <td style="white-space:nowrap">${canEdit ? `<div style="display:flex;gap:4px"><button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editDetalhamento(${idx})">Editar</button><button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Retornar para Aguardando Cliente" onclick="reverterDetalhamento(${idx})">↩</button>${btnExcluir(idx,'Detalhamento')}</div>` : '—'}</td>
     </tr>`;
 
     if (expanded) {
@@ -4201,7 +4227,7 @@ function renderEntregues() {
       <td style="font-family:monospace;color:#f59e0b">${tProd}</td>
       <td style="font-family:monospace;color:#22c55e">${tInst}</td>
       <td style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:#a78bfa">${leadTotal}</td>
-      <td>${canEditEnt ? `<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Instalação" onclick="reverterEntregue(${idx})">↩</button>` : '—'}</td>
+      <td>${canEditEnt ? `<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Instalação" onclick="reverterEntregue(${idx})">↩</button>${btnExcluir(idx,'Entregues')}` : '—'}</td>
     </tr>`;
   }).join('');
 }
@@ -4365,7 +4391,7 @@ function renderReprovados() {
       <td style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:#ef4444">${fmtBRL(o.valor)}</td>
       <td><span class="badge badge-red">${o.motivoPerda||'Não informado'}</span></td>
       <td style="font-size:12px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.obsGeral||'—'}</td>
-      <td>${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Aguardando Cliente" onclick="reverterReprovado(${idx})">↩ Reverter</button>` : '—'}</td>
+      <td style="white-space:nowrap">${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Aguardando Cliente" onclick="reverterReprovado(${idx})">↩ Reverter</button>${btnExcluir(idx,'Reprovados')}` : '—'}</td>
     </tr>`;
   }).join('');
 }
@@ -4524,7 +4550,7 @@ function renderAguardando() {
         ${canEdit ? `
           <button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:#22c55e;border-color:#22c55e" onclick="aprovarOrcamento(${idx})">✅ Aprovar</button>
           <button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:#ef4444;border-color:#ef4444" onclick="reprovarOrcamento(${idx})">❌ Reprovar</button>
-          <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Orçamentos (Em Andamento)" onclick="reverterAguardando(${idx})">↩</button>
+          <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Orçamentos (Em Andamento)" onclick="reverterAguardando(${idx})">↩</button>${btnExcluir(idx,'Aguardando Cliente')}
         ` : '—'}
       </td>
     </tr>`;
@@ -4897,20 +4923,7 @@ function renderCalendario() {
 
 
 // ===== COBRANÇA =====
-function confirmarExcluirOrc(idx) {
-  const o = orcamentos[idx];
-  if (!o) return;
-  document.getElementById('modal-excluir-title').textContent = 'Excluir orçamento #' + o.num + '?';
-  document.getElementById('modal-excluir-info').textContent = o.cliente + ' — ' + fmtBRL(o.valor);
-  document.getElementById('modal-excluir-confirm').onclick = () => {
-    orcamentos.splice(idx, 1);
-    saveData();
-    renderAll();
-    showToast('✅ Orçamento excluído!', 'success');
-    document.getElementById('modal-excluir').classList.remove('open');
-  };
-  document.getElementById('modal-excluir').classList.add('open');
-}
+function confirmarExcluirOrc(idx) { excluirOrcamento(idx, ''); }
 
 function reverterCobranca(idx) {
   const o = _getOrc(idx); if (!o) return;
@@ -4963,7 +4976,7 @@ function renderCobranca() {
       <td style="font-family:'Barlow Condensed',sans-serif">${o.adiantamento ? fmtBRL(o.adiantamento) : '—'}</td>
       <td><span class="badge ${stColor}">${st}</span></td>
       <td style="font-size:11px;color:var(--text-muted);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.obsCobranca||'—'}</td>
-      <td style="display:flex;gap:4px">${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editCobranca(${idx})">Editar</button>${st !== 'Pago' ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:#22c55e;border-color:#22c55e" onclick="confirmarPagamento(${idx})">✅ Pago</button>` : ''}<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Instalação" onclick="reverterCobranca(${idx})">↩</button>` : '—'}</td>
+      <td style="display:flex;gap:4px">${canEdit ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editCobranca(${idx})">Editar</button>${st !== 'Pago' ? `<button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:#22c55e;border-color:#22c55e" onclick="confirmarPagamento(${idx})">✅ Pago</button>` : ''}<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:#f59e0b;border-color:#f59e0b" title="Voltar para Instalação" onclick="reverterCobranca(${idx})">↩</button>${btnExcluir(idx,'Cobrança')}` : '—'}</td>
     </tr>`;
   }).join('');
 }
